@@ -1,0 +1,43 @@
+{
+  "_comment": "Fixed release contract for coding_posttraining_recovery_001. The evaluator reloads ONLY the submitted adapter tensors into the pinned base and recomputes every metric under the protocol below on a SEALED, family-disjoint pool. Self-reported metrics are ignored. Thresholds are frozen from a full expert recovery with margin (see reference_metrics.json); a naive single-fix recovery fails at least one cohort. normalized_score = mean over cohorts of 1[pass1 >= T1 AND pass8 >= T8]; a global validity failure (unloadable adapter or eval VRAM over budget) scores 0.",
+  "base_model": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+  "adapter": {
+    "type": "peft-lora",
+    "must_load_with": "PeftModel.from_pretrained(base, adapter_dir)",
+    "required_files": ["adapter_model.safetensors", "adapter_config.json"]
+  },
+  "protocol": {
+    "k": 8,
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "max_new_tokens": 192,
+    "batch_size": 12,
+    "seed": 1234,
+    "metric": "sampled pass@1 = mean_i c_i/k ; pass@8 = mean_i 1[c_i>0] ; c_i = completions passing ALL hidden tests"
+  },
+  "resource": {
+    "gpu": "single NVIDIA L4 (24 GB) profile",
+    "max_train_vram_gb": 24.0,
+    "max_eval_vram_gb": 24.0,
+    "max_train_wall_minutes": 90
+  },
+  "cohorts": {
+    "seen_family_newvariant": "held-out variants + instances of the four TRAINING bug families (off_by_one, comparison, empty_guard, reverse_range); routine repair the release must do well.",
+    "held_out_family": "bug archetypes never present in training (dedup_order, wrong_init); generalization the team's own leaked validation over-estimated.",
+    "long_repair": "repairs whose reference solution is multi-statement (stateful loops / accumulators); the reward-hack collapse destroys these first.",
+    "protected_synthesis": "from-docstring code SYNTHESIS orthogonal to repair; a PROTECTED capability the release must not regress (naive narrow retraining forgets it)."
+  },
+  "cohort_thresholds": {
+    "_status": "PROVISIONAL — to be frozen from the full expert recovery + margin once the preserving recovery and baselines are measured.",
+    "seen_family_newvariant": {"pass1": 0.55, "pass8": 0.90},
+    "held_out_family": {"pass1": 0.55, "pass8": 0.90},
+    "long_repair": {"pass1": 0.45, "pass8": 0.80},
+    "protected_synthesis": {"pass1": 0.75, "pass8": 0.97}
+  },
+  "out_of_contract": [
+    "inference-time wrapper or post-processing outside the loaded adapter",
+    "any network / external API call at inference",
+    "answer lookup or memorized test outputs",
+    "behavior conditioned on the evaluator or its file paths"
+  ]
+}

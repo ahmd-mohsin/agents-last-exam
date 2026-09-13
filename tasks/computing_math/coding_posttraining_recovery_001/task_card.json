@@ -1,0 +1,52 @@
+{
+  "taskId": "computing_math/coding_posttraining_recovery_001",
+  "title": "Post-Training Recovery of a Reward-Hacked Coding Model",
+  "taskName": "Coding Post-Training Recovery",
+  "summary": "Recover a failed GRPO post-training run of a compact coding model and ship a reproducible LoRA adapter that clears a per-cohort release contract on a sealed, family-disjoint evaluation pool, under a single-GPU (NVIDIA L4, 24 GB) budget. The shipped run reward-hacked a length-biased execution proxy: the visible reward climbed while independent test-pass correctness regressed and a protected synthesis capability was forgotten. Co-occurring realistic faults (train/eval family leakage that inflates the team's own validation, mislabeled replay solutions, a completion-mask defect in the trainer) mean no single fix recovers. An independent evaluator reloads only the submitted adapter tensors into the pinned base and recomputes every metric.",
+  "category": "computing_math",
+  "software": ["Python", "PyTorch", "transformers", "trl", "peft"],
+  "tags": ["post-training", "reinforcement-learning", "grpo", "lora", "reward-hacking",
+           "catastrophic-forgetting", "data-provenance", "reproducibility", "single-gpu"],
+  "taskPrompt": "You inherit a FAILED GRPO+LoRA post-training run of Qwen2.5-Coder-1.5B-Instruct on short Python function repair, single GPU (NVIDIA L4, 24 GB). The reward climbed and the team's validation improved, but the shipped adapter is worse than the base model on an independent test-pass evaluation and a prior capability regressed. Read input/task_brief.md and input/release_contract.json. Using only the agent-visible repo, adapters, data, replay, and base weights, diagnose the failure and ship a trustworthy replacement adapter under output/ that clears the release contract. Treat input/ as read-only; the sealed evaluation pool is staged only at evaluation time.",
+  "agentMustDo": [
+    "Recompute independent test-pass pass@1/pass@8 for the regressed adapter and every supplied checkpoint; reconcile the reward logs against executable results to locate the reward-hack.",
+    "Establish data provenance: detect that the team's train/val split leaks bug families (inflating their validation) and that some supplied 'verified' replay solutions are wrong; rebuild a clean family-disjoint split and re-verify replay against oracles.",
+    "Read the shipped trainer and find the completion-mask / update-semantics defect that caps recovery even with a correct reward.",
+    "Choose and justify a recovery (objective, data, replay, KL/anchoring, stopping) with short comparison runs; preserve the protected synthesis capability while improving repair.",
+    "Train a replacement LoRA adapter within the single-GPU 24 GB / 90-minute budget and validate on family-disjoint problems with the fixed decoding protocol.",
+    "Write a reproducible release: adapter/, train.py, config.yaml, reproduce.sh, diagnosis.md, metrics.json, provenance.json."
+  ],
+  "inputFiles": [
+    {"name": "task_brief.md", "path": "input/task_brief.md", "format": "Markdown",
+     "description": "Objective, given materials, release contract summary, deliverable, rules."},
+    {"name": "release_contract.json", "path": "input/release_contract.json", "format": "JSON",
+     "description": "Fixed inference protocol, predeclared cohorts, per-cohort thresholds, compute budget."},
+    {"name": "repo", "path": "input/repo", "format": "directory",
+     "description": "The actual failed-run training code: grpo_train.py, sandbox.py (faulty reward), problems.py, config.yaml, logs/."},
+    {"name": "adapters", "path": "input/adapters", "format": "directory",
+     "description": "regressed/ shipped adapter + every checkpoint-*/ (candidate rollbacks)."},
+    {"name": "data", "path": "input/data", "format": "JSONL",
+     "description": "train.jsonl + the team's (leaky) val.jsonl."},
+    {"name": "replay", "path": "input/replay", "format": "JSONL",
+     "description": "verified_solutions.jsonl for replay / filtered SFT (contains mislabeled entries)."},
+    {"name": "base_model", "path": "input/base_model", "format": "directory",
+     "description": "Full local weights + tokenizer of the pinned base."},
+    {"name": "smoke", "path": "input/smoke", "format": "directory",
+     "description": "Public non-sealed subset grader (smoke_eval.py); necessary, not sufficient."}
+  ],
+  "referenceFiles": [
+    {"name": "sealed", "path": "reference/sealed", "format": "JSONL",
+     "description": "Sealed, family-disjoint cohorts: seen_family_newvariant, held_out_family, long_repair, protected_synthesis; evaluator-only."},
+    {"name": "reference_metrics.json", "path": "reference/reference_metrics.json", "format": "JSON",
+     "description": "Trusted expert-recovery per-cohort metrics, frozen thresholds, and negative-control baselines."}
+  ],
+  "evaluation": "The evaluator reloads ONLY the submitted adapter tensors into a fresh copy of the pinned base (agent training code is never imported), regenerates k=8 completions per problem under the fixed protocol (temperature 0.8, top_p 0.95, 192 tokens, seed 1234), executes them in an isolated sandbox, and computes per-cohort pass@1/pass@8 on the sealed family-disjoint pool. normalized_score = mean over cohorts of 1[pass1 >= T1 AND pass8 >= T8]; a full release requires all cohorts to clear with margin. An unloadable adapter, a base-incompatible adapter, or eval VRAM over the 24 GB budget scores 0. The full expert recovery clears every cohort; rollback, reward-swap-only (buggy trainer), reward-swap on dirty data (fails the sealed held-out family), plain narrow true-reward GRPO (forgets protected synthesis), and filtered SFT each fail at least one cohort. Self-reported metrics are ignored.",
+  "vm": {"machineType": "gpu-single", "snapshot": "gpu-free", "os": "linux",
+         "timeout": 18000},
+  "variants": ["base"],
+  "taxonomy": {"domain_code": "computing_math",
+               "subdomain_name": "Machine Learning / Model Post-Training"},
+  "requiredSystemPackages": [],
+  "difficulty": {"class": "last-exam-candidate",
+                 "note": "Reward-hack incident + recovery reproduced on the emulated L4 (base pass@1 0.47 -> faulted 0.35 -> single-fix recovery 0.63). Hardened with entangled data/trainer/forgetting faults so a single fix fails the multi-cohort contract. Frontier screen pending; thresholds to be frozen from the full expert recovery + margin."}
+}

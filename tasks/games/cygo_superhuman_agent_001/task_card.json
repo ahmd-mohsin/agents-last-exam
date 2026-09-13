@@ -1,0 +1,37 @@
+{
+  "taskId": "games/cygo_superhuman_agent_001",
+  "title": "CYGO — Build a Superhuman Agent for a Novel Board Game",
+  "taskName": "CYGO Superhuman Agent",
+  "summary": "Build an agent for CYGO (Cylinder Gonnect), a novel 13x13 Go variant invented for this exam (columns wrap into a cylinder; win by connecting the top and bottom edges; no passing; positional superko; ply-cap adjudication). No engine, weights, opening book, or literature exists for it, so nothing pretrained transfers. The agent is graded by win-rate over 1000 games against a HIDDEN reference agent trained by an AlphaZero-style self-play pipeline; score = clip(2 * win-rate, 0, 1). The plan (AlphaZero) is handed over; the difficulty is ACHIEVING reference-competitive strength under a single-GPU match budget within the wall-clock budget, which requires a correct + fast engine, batched self-play, and a well-tuned training run — not knowledge.",
+  "category": "games",
+  "software": ["Python", "PyTorch", "C++/pybind11", "Triton/CUDA (optional)"],
+  "tags": ["reinforcement-learning", "alphazero", "self-play", "mcts", "board-game",
+           "long-horizon", "gpu-training", "novel-game"],
+  "taskPrompt": "Build a superhuman agent for CYGO (Cylinder Gonnect), a novel 13x13 Go variant (rules + engine in input/). Train it (AlphaZero-style self-play is intended) and deliver output/run.sh implementing the match protocol over stdin/stdout, playing within the per-move wall-clock budget on one 24 GB GPU. An independent referee plays 1000 games vs a hidden AlphaZero-trained reference; score = clip(2 * win-rate, 0, 1). Treat input/ as read-only; the reference is staged only at evaluation time.",
+  "agentMustDo": [
+    "Read input/task_brief.md and input/cygo_rules.json (board, cylinder wrap, capture, suicide, positional superko, win-by-top-bottom-connection, ply-cap, the 52-element symmetry group).",
+    "Use the shipped rules engine (input/engine/, identical to the referee) for legal moves / terminal detection.",
+    "Build a training pipeline (self-play + a policy/value network + MCTS) and train an agent strong enough to be reference-competitive.",
+    "Deliver output/run.sh implementing the stdin/stdout match protocol (newgame/opening/move/quit), emitting only legal moves within the per-move wall-clock budget and 24 GB.",
+    "Validate locally against the shipped baseline bot and the exact match harness in input/harness/."
+  ],
+  "inputFiles": [
+    {"name": "task_brief.md", "path": "input/task_brief.md", "format": "Markdown", "description": "Objective, rules summary, protocol, budget, deliverable."},
+    {"name": "cygo_rules.json", "path": "input/cygo_rules.json", "format": "JSON", "description": "Authoritative rules + symmetry group + adjudication."},
+    {"name": "engine", "path": "input/engine", "format": "directory", "description": "Exact CYGO rules engine (cygo_engine.py + cygo_cpp.cpp, 52 transforms) matching the referee."},
+    {"name": "baseline", "path": "input/baseline", "format": "directory", "description": "Random-rollout MCTS baseline bot (a smoke opponent)."},
+    {"name": "harness", "path": "input/harness", "format": "directory", "description": "The EXACT match harness + protocol used to grade (match_harness.py, agent_proto.py)."},
+    {"name": "starter", "path": "input/starter", "format": "directory", "description": "run.sh template + protocol agent stub."}
+  ],
+  "referenceFiles": [
+    {"name": "reference_agent", "path": "reference/reference_agent", "format": "directory", "description": "Hidden AlphaZero-trained reference agent (weights + run.sh); evaluator-only, staged at eval."},
+    {"name": "reference_metrics.json", "path": "reference/reference_metrics.json", "format": "JSON", "description": "Trusted reachability metrics: independent-seed and from-scratch replication scores + the score->Elo mapping."}
+  ],
+  "evaluation": "The referee (scripts/match_harness.py) plays 1000 games (500 as each color) between the submitted output/run.sh and the hidden reference agent, from forced balanced openings, under the shipped protocol and per-move wall-clock budget. Each agent runs under the compute-isolation wrapper (scripts/ISOLATION.md: per-game container, MPS 24 GB cap, seccomp allow-list, freeze-then-drain turn clock, DCGM/NVML off-turn oracles). Illegal move / malformed reply / crash / clock or memory-cap violation = loss of that game. Score = clip(2 * win-rate, 0, 1) (equal strength -> 1.0; ~ -520 Elo -> 0.10; the CI at S~0.1 is +/-0.014). Everything is mechanical: run 1000 games, count wins. Self-reported results are ignored; the reference is staged only at eval.",
+  "vm": {"machineType": "gpu-single", "snapshot": "gpu-free", "os": "linux", "timeout": 1209600},
+  "variants": ["base"],
+  "taxonomy": {"domain_code": "games", "subdomain_name": "Game Playing / Reinforcement Learning"},
+  "requiredSystemPackages": ["g++", "python3-pybind11"],
+  "difficulty": {"class": "last-exam-candidate",
+                 "note": "Adversarially curated (Fable 5.1 blue / GPT-6-Astra + Fable red, 4 rounds): both strongest models, attempting it in a full session, self-estimate ~0.06-0.12 and find no shortcut. Reachability: second independent-seed run ~0.89, from-scratch replication under the agent's budget ~0.33-0.51 (the verified expert bar). Reference + reachability runs in progress on the training clusters; thresholds are the fixed score=clip(2*winrate) mapping."}
+}

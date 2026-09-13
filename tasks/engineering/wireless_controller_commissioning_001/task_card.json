@@ -1,0 +1,46 @@
+{
+  "taskId": "engineering/wireless_controller_commissioning_001",
+  "title": "Wireless Controller Commissioning (imperfect, delayed CSI)",
+  "taskName": "Wireless Controller Commissioning",
+  "summary": "Commission an energy-efficient multi-user MIMO uplink power controller from imperfect, delayed channel measurements. Audit the measurements, predict the delayed channel under dense-urban Doppler, calibrate joint prediction uncertainty over the declared operating envelope, solve energy-optimal robust power control, and deliver a reproducible controller release. An independent evaluator replays the release on withheld channels drawn from a shifted deployment regime and scores per-user reliability and transmit energy.",
+  "category": "engineering",
+  "software": ["Python", "PyTorch", "NumPy", "Zarr", "Sionna 2.1.0"],
+  "tags": ["wireless", "mimo", "power-control", "csi-prediction",
+           "robust-optimization", "uncertainty-calibration", "38901", "sionna"],
+  "taskPrompt": "You are commissioning a replacement uplink power controller for a 4-user, 8-antenna MIMO base station over 24 OFDM tones (3GPP 38.901 UMi). At each decision the latest channel estimate is 2 frames stale and the channel evolves with Doppler. Read input/task_brief.md and input/radio_system.json. Using only the agent-visible archives (train/dev/envelope) build a controller that meets the per-user reliability contract at minimum transmit energy, and write a reproducible release under output/. Treat input/ as read-only; the reference is staged only at evaluation time.",
+  "agentMustDo": [
+    "Audit input/observations conventions (units, pilot masking, delay, array axes) via input/radio_system.json.",
+    "Fit a channel predictor that uses only history available at each decision (no future samples); persistence is far too stale under the Doppler.",
+    "Calibrate joint prediction uncertainty across users/antennas/tones over the DECLARED envelope (not just nominal dev data) to survive the deployment shift.",
+    "Solve energy-optimal robust power control (raising power blindly increases mutual interference and hurts reliability).",
+    "Operate Sionna (input/public_eval) to relate post-combining SINR to coded decode via the published curve, and validate locally.",
+    "Write output/controller.py implementing the Controller interface plus its fitted artifacts and a reproduction script."
+  ],
+  "inputFiles": [
+    {"name": "task_brief.md", "path": "input/task_brief.md", "format": "Markdown",
+     "description": "Objective, interface, compute budget, required handoff."},
+    {"name": "radio_system.json", "path": "input/radio_system.json", "format": "JSON",
+     "description": "Full 38.901 spec, receiver/combiner rule, units, delay, demand, envelope, contract."},
+    {"name": "archive", "path": "input/archive", "format": "Zarr",
+     "description": "train/dev (nominal 1-5 m/s) + envelope (1-6 m/s) true channel trajectories (N,T,U,F,M)."},
+    {"name": "public_eval", "path": "input/public_eval", "format": "directory",
+     "description": "Dev replay + numerical checks + Sionna coded-link curve/tools the agent operates."},
+    {"name": "starter", "path": "input/starter", "format": "directory",
+     "description": "Conservative baseline controller + the Controller interface stub."}
+  ],
+  "referenceFiles": [
+    {"name": "hidden_packs", "path": "reference/hidden", "format": "Zarr",
+     "description": "12 withheld acceptance packs, shifted regime (4-6 m/s), independent seeds; evaluator-only."},
+    {"name": "reference_metrics.json", "path": "reference/reference_metrics.json", "format": "JSON",
+     "description": "Trusted expert-run acceptance metrics and the auto-calibrated contract."}
+  ],
+  "evaluation": "The evaluator loads output/controller.py in an isolated worker (no hidden access) and calls allocate() on each hidden pack to get POWERS (B,U,F). The receiver combiner is EVALUATOR-CONTROLLED: a per-tone MMSE combiner built from the LS estimate of the most recent OBSERVED frame (hist_est[:,-1]) at nominal power 1 (the candidate cannot influence it). The evaluator computes true-channel per-user rate and energy under that combiner and the submitted powers. A pack passes iff worst per-user service-failure <= 1% AND mean energy <= the calibrated budget. Normalized score = fraction of packs passing (coverage). Reference expert and an independent second-expert both achieve coverage 1.0; certainty-equivalent, persistence, dev-only-calibrated, and flat/max-power controllers each fail a gate, as do all screened frontier models. Missing/unloadable output scores 0. All metrics are recomputed from a fresh run of the submitted artifact; self-reported metrics are ignored.",
+  "vm": {"machineType": "gpu-single", "snapshot": "gpu-free", "os": "linux",
+         "timeout": 18000},
+  "variants": ["base"],
+  "taxonomy": {"domain_code": "engineering",
+               "subdomain_name": "Telecommunications / Wireless Systems Engineering"},
+  "requiredSystemPackages": [],
+  "difficulty": {"class": "last-exam", "reference_expert_coverage": 1.0,
+                 "frontier_screen": "difficulty_screen.json (opus-4.8 and sonnet-5 both coverage 0.0)"}
+}

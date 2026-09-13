@@ -1,0 +1,36 @@
+{
+  "game": "CYGO (Cylinder Gonnect)",
+  "board": {"size": 13, "columns_wrap": true, "rows_wrap": false,
+            "note": "Point = (col,row), 0<=col<13 wraps (col 12 adjacent to col 0), 0<=row<13 has edges (row 0 = top, row 12 = bottom). Orthogonal adjacency only."},
+  "players": {"first": "black(1)", "second": "white(2)", "empty": 0},
+  "moves": {
+    "placement": "Place one stone of your color on an empty point. Passing is ILLEGAL.",
+    "capture": "After placement, any opponent group (orthogonally connected, with column wrap) with zero liberties is removed.",
+    "suicide": "ILLEGAL: after resolving captures, your own placed group must have >= 1 liberty.",
+    "superko": "Positional superko: a move may not recreate ANY previous full-board stone configuration (color-to-move independent)."
+  },
+  "terminal": {
+    "win_by_connection": "Immediately after your move, if any of YOUR orthogonally-connected groups touches BOTH row 0 and row 12, you win.",
+    "no_legal_move": "A player with no legal move loses.",
+    "ply_cap": {"plies": 600, "rule": "If ply 600 completes with no winner, the player with MORE stones on the board wins; ties go to White. Draws are impossible."}
+  },
+  "openings": {"forced_plies": 6, "note": "The first 6 plies are dictated by the harness from a hidden balanced pool; neither side chooses them. They are revealed to you via the 'opening' prefix on your first move command."},
+  "symmetry_group": {
+    "order": 52,
+    "generators": ["13 column shifts (cyclic)", "left-right column mirror", "top-bottom row reflection (c,r)->(c,12-r)"],
+    "structure": "C13 |x (C2 x C2); color swap is NOT a symmetry",
+    "note": "Disclosed so neither side holds a hidden invariance. A column-circular-conv network is exactly equivariant to the 13 shifts."
+  },
+  "engine": {"module": "cygo_cpp (pybind11) / cygo_engine.py (reference)",
+             "api": ["State()", "legal_moves()->[idx]", "is_legal(idx)->bool", "play(idx)", "terminal()->bool", "winner", "to_move", "board()->(13,13) int8", "clone()"],
+             "idx": "idx = col*13 + row"},
+  "match": {
+    "protocol": ["newgame <black|white> <seed>  -> = ok",
+                 "[opening <c1> <r1> ... <c6> <r6>] move <opp_col> <opp_row>|-  -> = <col> <row>",
+                 "quit"],
+    "games": 1000, "colors": "500 as each",
+    "per_move_budget_s": 3.0, "gpu": "1 x NVIDIA L4, 24 GB",
+    "adjudication": "illegal move / malformed reply / crash / clock or memory violation = loss of that game",
+    "score": "clip(2 * win_rate, 0, 1)  (equal strength -> 1.0; ~ -520 Elo -> 0.10)"
+  }
+}

@@ -60,3 +60,7 @@ secret/eval_time/openai.env
 
 # Stray cua-bench eval artifacts written to cwd during host-side task eval
 trycua/
+
+# Local-only GPU workspace connection scripts + credentials (Greenland p4d).
+# Never check in — contains instance IDs and Bedrock STS creds.
+greenland/

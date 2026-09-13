@@ -1,0 +1,11 @@
+{
+  "screen_type": "diagnosis (single-shot Bedrock, us.* inference profiles, maxTokens 7000)",
+  "date": "2026-09-11",
+  "rationale": "The recovery's intellectual core is a diagnosis: find why pass@1 regressed while the optimized reward rose, and prescribe the fix. Every correct diagnosis yields the same measured recovery (true test-pass reward -> pass@1 0.46->0.62, clears cohorts); every wrong one stays near the faulted 0.35. So the diagnosis screen bounds the task's real difficulty.",
+  "materials_given": "Actual faulty artifacts: sandbox.py weak_reward + _brevity, grpo_train reward path, run config, representative failed-run log (reward up / completion_length 45->22), and measured base/faulted metrics.",
+  "panel": ["gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna",
+            "opus-5", "opus-4-8", "sonnet-5", "fable-5-1", "haiku-4-5"],
+  "result": "9/9 models correctly identified the length-biased 'runs-not-correct' reward hack AND prescribed the true test-pass reward (npass/ntot). Several also flagged the completion-length collapse, Goodhart's law, pass@8 diversity collapse, and that the team's own validation is a correlated proxy (the leakage/provenance angle) without being told.",
+  "conclusion": "The recovery is trivially discoverable by the entire frontier panel. This task is NOT last-exam. Its residual difficulty is execution (drive one L4, fit 24 GB, retrain within budget, clear the multi-cohort margin, reproduce), i.e. engineering reliability, not a frontier-defeating research gap. A real difficulty number requires a full AGENTIC screen (models driving the box end-to-end); the diagnosis being solved caps the plausible frontier score well above the last-exam threshold.",
+  "honesty_note": "Do not claim frontier avg < 0.1. The intellectual core is solved single-shot by every model tested, including the strongest (gpt-6-astra, opus-5, sonnet-5)."
+}
