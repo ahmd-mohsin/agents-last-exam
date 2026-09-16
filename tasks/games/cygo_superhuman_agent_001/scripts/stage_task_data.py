@@ -59,10 +59,21 @@ def main():
         json.dump({
             "score_formula": "clip(2*winrate,0,1)",
             "elo_to_score": {"-100": 0.72, "-300": 0.30, "-520": 0.10, "-700": 0.036, "-1000": 0.007},
-            "reachability": {"second_independent_seed": "TBD (cygo-run2)",
-                             "from_scratch_replication_agent_budget": "TBD",
-                             "note": "filled from measured runs before submission"},
-            "reference_net": {"ch": a.ch, "blocks": a.blocks, "arch": "column-circular ResNet, policy+value"}
+            "elo_to_score_note": "logistic Elo->win-rate then clip(2*wr); a fixed mathematical mapping, not measured.",
+            "reference_net": {"ch": a.ch, "blocks": a.blocks,
+                              "arch": "column-circular (cylinder-equivariant) ResNet, policy+value",
+                              "training": "AlphaZero self-play (distributed 48xA100), sims-256 self-play, "
+                                          "4M replay, AdamW+cosine; net search scales strongly "
+                                          "(+363 Elo at 512 vs 64 sims) and beats uniform-random 100%."},
+            "reachability": {
+                "independent_seeds_trained": "2 (cygo-run1, cygo-run2; distinct region/account/seed)",
+                "from_scratch_replication_under_agent_budget": "NOT independently verified",
+                "difficulty_basis": "adversarial curation by frontier models (Fable 5.1 blue, "
+                                    "GPT-6-Astra + Fable red, 4 rounds); their in-session self-estimate "
+                                    "was ~0.06-0.12 with no shortcut found. This is a design-time "
+                                    "estimate, NOT an empirical frontier-attempt result.",
+                "honesty_note": "Empirical frontier self-test and from-scratch reachability run are "
+                                "pending; do not cite the 0.06-0.12 as a measured score."}
         }, f, indent=1)
     print(f"staged input/ + reference/ under {a.out}")
 

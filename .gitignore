@@ -64,3 +64,7 @@ trycua/
 # Local-only GPU workspace connection scripts + credentials (Greenland p4d).
 # Never check in — contains instance IDs and Bedrock STS creds.
 greenland/
+
+# Trained model weights / code bundles — too large for git (ship reference via Drive).
+*.pt
+*.tgz

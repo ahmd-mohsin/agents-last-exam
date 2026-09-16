@@ -33,5 +33,5 @@
   "taxonomy": {"domain_code": "games", "subdomain_name": "Game Playing / Reinforcement Learning"},
   "requiredSystemPackages": ["g++", "python3-pybind11"],
   "difficulty": {"class": "last-exam-candidate",
-                 "note": "Adversarially curated (Fable 5.1 blue / GPT-6-Astra + Fable red, 4 rounds): both strongest models, attempting it in a full session, self-estimate ~0.06-0.12 and find no shortcut. Reachability: second independent-seed run ~0.89, from-scratch replication under the agent's budget ~0.33-0.51 (the verified expert bar). Reference + reachability runs in progress on the training clusters; thresholds are the fixed score=clip(2*winrate) mapping."}
+                 "note": "Difficulty basis is DESIGN-TIME adversarial curation (Fable 5.1 blue / GPT-6-Astra + Fable red, 4 rounds): both models, attempting it in a full session, self-estimate ~0.06-0.12 and find no shortcut. This is an estimate, NOT a measured frontier-attempt score. Reference is a real distributed-AlphaZero net (beats uniform-random 100%; search scales +363 Elo 512-vs-64). Two independent-seed training runs exist (cygo-run1/run2). Empirical frontier self-test and from-scratch reachability under the agent budget are PENDING; thresholds are the fixed score=clip(2*winrate) mapping. See reference/reference_metrics.json honesty_note."}
 }
