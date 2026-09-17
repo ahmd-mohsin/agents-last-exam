@@ -12,10 +12,18 @@
   "ch": 256,
   "blocks": 15,
   "arch": "column-circular (cylinder-equivariant) ResNet, policy+value",
-  "training": "AlphaZero self-play (distributed 48xA100), sims-256 self-play, 4M replay, AdamW+cosine; net search scales strongly (+363 Elo at 512 vs 64 sims) and beats uniform-random 100%."
+  "shipped_checkpoint": "cygo-run2 global_step_977400 (the more-trained seed)",
+  "training": "AlphaZero self-play (distributed ~48xA100), sims-256 self-play, 4M-game replay, AdamW + warmup->cosine. Net search scales strongly (+363 Elo at 512 vs 64 sims) and beats uniform-random 100%."
+ },
+ "measured_strength": {
+  "sims_scaling_512_vs_64": "0.890 winrate / +363 Elo (same net; confirms MCTS is correct)",
+  "c2_step977k_vs_early_272900": "0.983 winrate / +708 Elo (genuine large improvement)",
+  "c1_sims256_window_218k_vs_165k": "0.592 / +64 Elo",
+  "vs_uniform_random": "~1.0 (policy and MCTS)",
+  "method": "batched_match.py, 120 games, 128 sims, noise 0.0, on a held GPU"
  },
  "reachability": {
-  "independent_seeds_trained": "2 (cygo-run1, cygo-run2; distinct region/account/seed)",
+  "independent_seeds_trained": "2 (cygo-run1 -> step 712200, cygo-run2 -> step 977400; distinct region/account/seed)",
   "from_scratch_replication_under_agent_budget": "NOT independently verified",
   "difficulty_basis": "adversarial curation by frontier models (Fable 5.1 blue, GPT-6-Astra + Fable red, 4 rounds); their in-session self-estimate was ~0.06-0.12 with no shortcut found. This is a design-time estimate, NOT an empirical frontier-attempt result.",
   "honesty_note": "Empirical frontier self-test and from-scratch reachability run are pending; do not cite the 0.06-0.12 as a measured score."
